@@ -1,0 +1,192 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>Desa Karyamukti</title>
+  <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Website Resmi Desa Karyamukti">
+  <meta name="keyword" content="WebsiteEngine,Website Pemerintahan">
+  <link rel="icon" type="image/x-icon" href="img/logo-desa.png">
+  <link href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" media="screen" rel="stylesheet" type="text/css" />
+  <link href="css/frame.css" media="screen" rel="stylesheet" type="text/css" />
+  <link href="css/controls.css" media="screen" rel="stylesheet" type="text/css" />
+  <link href="css/custom.css" media="screen" rel="stylesheet" type="text/css" />
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300,700' rel='stylesheet' type='text/css'>
+  <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700" rel="stylesheet">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="js/menu.js"></script>
+  <script src="js/footer.js"></script>
+  <style>
+    .menu-index {
+      color: rgb(255, 255, 255) !important;
+      opacity: 1 !important;
+      font-weight: 700 !important;
+    }
+    .center-margin{
+      display: flex;
+      justify-content: left;
+      margin-right: 100px;
+    }
+
+    .post-summary {
+      cursor: pointer;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+      margin-right: 10px;
+      display: flex;
+      align-items: center;
+    }
+
+    .post-summary img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      margin-right: 20px;
+    }
+    @media only screen and (max-width: 600px) {
+      .banner {
+        height: auto;
+      }
+      .banner-table {
+        padding: 20px;
+      }
+      .center-margin {
+        margin-right: 0;
+      }
+      .post-summary {
+        margin-right: 0;
+      }
+      .post-summary img {
+        width: 80px;
+        height: 80px;
+        margin-right: 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="menu-container"></div>
+  <div class="content-container">
+    <!-------------------------------------------------------------------------------------------->
+    <!--Start Header-->
+    <div class="banner" style="background: url('img/img-11.jpeg') no-repeat center; background-size: cover; height: 500px;"></div>
+    <div class="banner">
+      <div class="banner-table flex-column">
+        <div class="flex-row">
+          <div class="flex-item flex-column">
+            <h2 class="add-top-margin-small">Desa Karyamukti</h2>
+            <p class="text">
+             Desa Karyamukti merupakan desa yang berada di Kecamatan Panyingkiran Kabupaten Majalengka. 
+             Desa Karyamukti sudah berdiri sejak 1980. 
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--End Header-->
+    <div class="content">
+      <div class="content-table flex-column">
+    <!--start Body-->
+    <!--blog top tree-->
+        <div class="flex-row">
+          <div class="flex-item flex-column full-width">
+            <h2>Blog</h2>
+            <hr>
+          </div>
+          <div id="latestPostsList"></div>
+        </div>
+    <!--stop blog-->
+    <!--gopal bau belum mandi belum pake celana-->
+
+    <!-------------------------------------------------------------------------------------------->
+
+
+        <!-------------------------------------------------------------------------------------------->
+      </div>
+    </div>
+    <div class="footer-container"></div>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyA_6JaEDwjsguMhAqcUXwNlWODzqsWDPNo",
+        authDomain: "karyamukti-test.firebaseapp.com",
+        projectId: "karyamukti-test",
+        storageBucket: "karyamukti-test.appspot.com",
+        messagingSenderId: "803789343916",
+        appId: "1:803789343916:web:6c693876e74e2e48d4e309",
+        measurementId: "G-ZQTPJ25M4J"
+      };
+    firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // Function to format timestamp to WIB
+  function formatTimestampToWIB(timestamp) {
+    const utcDate = timestamp.toDate();
+    const wibOffset = 7 * 60 * 60 * 1000;
+    const wibDate = new Date(utcDate.getTime() + wibOffset);
+    const options = {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric"
+    };
+    const formattedDate = wibDate.toLocaleString("en-US", options);
+    return formattedDate;
+  }
+
+  // Retrieve and display latest posts
+  document.addEventListener("DOMContentLoaded", function () {
+    const latestPostsDiv = document.getElementById("latestPostsList");
+
+    db.collection("blog")
+      .orderBy("timestamp", "desc")
+      .limit(3)
+      .get()
+      .then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+          const postData = doc.data();
+          const postSummary = document.createElement("div");
+          postSummary.classList.add("post-summary");
+
+          const timestamp = postData.timestamp;
+          const formattedTimestampWIB = timestamp
+            ? formatTimestampToWIB(timestamp)
+            : 'Invalid timestamp';
+
+          const imageURL = postData.imageURL || 'placeholder_image_url.jpg'; // Provide a default image URL if imageURL is missing
+
+          postSummary.innerHTML = `
+          <div class="flex-row">
+            <div class="flex-item flex-item-stretch flex-column">
+              <img class="image max-width-400"  src="${imageURL}" alt="Post Image">
+            </div>
+            <div class="flex-item flex-item-stretch-4 flex-column">
+              <p class="text">
+              <a class="highlight-text" href="javascript:void(0)">${postData.title || 'Untitled'}</a> <!-- Provide a default title if missing -->
+              <br>${postData.content ? postData.content.slice(0, 200) + '...' : 'No content available'}</p> <!-- Handle missing content -->
+              <p>${formattedTimestampWIB} WIB</p>
+            </div>
+          </div>
+          `;
+
+          postSummary.addEventListener("click", function() {
+            window.location.href = `fullPost.html?id=${doc.id}`;
+          });
+
+          latestPostsDiv.appendChild(postSummary);
+        });
+      })
+      .catch((error) => {
+        console.error("Error fetching posts: ", error);
+      });
+  });
+</script>
+</body>
+
+</html>
+        

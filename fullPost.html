@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Full Post</title>
+  <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Website Resmi Desa Karyamukti">
+  <meta name="keyword" content="WebsiteEngine,Website Pemerintahan">
+  <link rel="icon" type="image/x-icon" href="img/logo-desa.png">
+  <link href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" media="screen" rel="stylesheet" type="text/css" />
+  <link href="css/frame.css" media="screen" rel="stylesheet" type="text/css" />
+  <link href="css/controls.css" media="screen" rel="stylesheet" type="text/css" />
+  <link href="css/custom.css" media="screen" rel="stylesheet" type="text/css" />
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300,700' rel='stylesheet' type='text/css'>
+  <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700" rel="stylesheet">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="js/menu.js"></script>
+  <script src="js/footer.js"></script>
+  <style>
+      .menu-blog {
+      color: rgb(255, 255, 255) !important;
+      opacity: 1 !important;
+      font-weight: 700 !important;
+    }
+  
+  </style>
+</head>
+<body>
+  <div class="menu-container"></div>
+  <div id="fullPost"></div>
+  <div class="footer-container" ></div>
+  
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  
+  <script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyA_6JaEDwjsguMhAqcUXwNlWODzqsWDPNo",
+        authDomain: "karyamukti-test.firebaseapp.com",
+        projectId: "karyamukti-test",
+        storageBucket: "karyamukti-test.appspot.com",
+        messagingSenderId: "803789343916",
+        appId: "1:803789343916:web:6c693876e74e2e48d4e309",
+        measurementId: "G-ZQTPJ25M4J"
+      };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const postId = urlParams.get('id');
+
+    const fullPostDiv = document.getElementById("fullPost");
+
+    // Function to format timestamp to WIB date and time
+    function formatTimestampToWIB(timestamp) {
+      const utcDate = timestamp.toDate(); // Convert Firestore timestamp to JavaScript Date object
+      const wibOffset = 7 * 60 * 60 * 1000; // UTC+7 in milliseconds
+      const wibDate = new Date(utcDate.getTime() + wibOffset);
+      const options = {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      };
+      const formattedDate = wibDate.toLocaleString("en-US", options);
+      return formattedDate;
+    }
+
+    // Fetch and display full post content
+    db.collection("blog").doc(postId).get().then((doc) => {
+      if (doc.exists) {
+        const postData = doc.data();
+        const fullPostContent = document.createElement("div");
+
+        const timestamp = postData.timestamp; // Assuming timestamp is stored correctly
+
+        if (timestamp && timestamp.toDate instanceof Function) {
+          const formattedDateTimeWIB = formatTimestampToWIB(timestamp);
+          fullPostContent.innerHTML = `
+          <div class="content-container">
+            <div class="content">
+              <div class="content-table flex-column">
+                <div class="flex-row">
+                  <div class="flex-item flex-column">
+                    <h2>${postData.title}</h2>
+                    <hr>
+                    <div style="justify-content: center; align-items: center; display:flex;">
+                      <img class="image max-width-400" src="${postData.imageURL || ''}" alt="Post Image" width="200">
+                    </div>
+                    <p class="text" style="text-align: justify;">${postData.content}</p>
+                    <p>Posted on: ${formattedDateTimeWIB} WIB</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          `;
+        } else {
+          fullPostContent.innerHTML = `
+            <h1>${postData.title}</h1>
+            <p>${postData.content}</p>
+            <img src="${postData.imageURL || ''}" alt="Post Image" width="200">
+            <p>Invalid timestamp</p>
+          `;
+        }
+
+        fullPostDiv.appendChild(fullPostContent);
+      } else {
+        console.log("No such document!");
+      }
+    }).catch((error) => {
+      console.error("Error getting post:", error);
+    });
+  </script>
+</body>
+</html>

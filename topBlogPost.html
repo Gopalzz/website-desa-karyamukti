@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Post List</title>
+  <style>
+    .post-summary {
+      cursor: pointer;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+    }
+    .post-summary img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      margin-right: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Blog</h1>
+  <div id="postList"></div>
+  <button id="nextPage">Next Page</button>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  
+  <script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyA_6JaEDwjsguMhAqcUXwNlWODzqsWDPNo",
+        authDomain: "karyamukti-test.firebaseapp.com",
+        projectId: "karyamukti-test",
+        storageBucket: "karyamukti-test.appspot.com",
+        messagingSenderId: "803789343916",
+        appId: "1:803789343916:web:6c693876e74e2e48d4e309",
+        measurementId: "G-ZQTPJ25M4J"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const postListDiv = document.getElementById("postList");
+    const nextPageButton = document.getElementById("nextPage");
+    const postsPerPage = 25;
+    let currentPage = 1;
+
+    function formatTimestampToWIB(timestamp) {
+      const utcDate = timestamp.toDate();
+      const wibOffset = 7 * 60 * 60 * 1000;
+      const wibDate = new Date(utcDate.getTime() + wibOffset);
+      const options = {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "numeric"
+      };
+      const formattedDate = wibDate.toLocaleString("en-US", options);
+      return formattedDate;
+    }
+
+    function displayPosts(querySnapshot) {
+  let count = 0;
+  querySnapshot.forEach((doc) => {
+    if (count < 3) { // Display only the latest three posts
+      const postData = doc.data();
+      const postSummary = document.createElement("div");
+      postSummary.classList.add("post-summary");
+
+      const timestamp = postData.timestamp;
+
+      const formattedTimestampWIB = timestamp ? formatTimestampToWIB(timestamp) : 'Invalid timestamp';
+
+      postSummary.innerHTML = `
+        <img src="${postData.imageURL || 'placeholder_image_url.jpg'}" alt="Post Image">
+        <div>
+          <h3>${postData.title}</h3>
+          <p>${postData.content.slice(0, 50)}...</p>
+          <p>${formattedTimestampWIB} WIB</p>
+        </div>
+      `;
+
+      postSummary.addEventListener("click", function() {
+        window.location.href = `fullPost.html?id=${doc.id}`;
+      });
+
+      postListDiv.appendChild(postSummary);
+    }
+    count++;
+  });
+
+  // Hide the "Next Page" button since you're only displaying the latest three posts
+  nextPageButton.style.display = "none";
+}
+
+    nextPageButton.addEventListener("click", () => {
+      currentPage++;
+      postListDiv.innerHTML = '';
+      db.collection("blog").orderBy("timestamp", "desc").get().then((querySnapshot) => {
+        displayPosts(querySnapshot);
+      }).catch((error) => {
+        console.error("Error fetching posts: ", error);
+      });
+    });
+
+    db.collection("blog").orderBy("timestamp", "desc").get().then((querySnapshot) => {
+      displayPosts(querySnapshot);
+    }).catch((error) => {
+      console.error("Error fetching posts: ", error);
+    });
+  </script>
+</body>
+</html>

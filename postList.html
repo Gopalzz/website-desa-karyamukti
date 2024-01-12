@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Post List</title>
+  <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Website Resmi Desa Karyamukti">
+  <meta name="keyword" content="WebsiteEngine,Website Pemerintahan">
+  <link rel="icon" type="image/x-icon" href="img/logo-desa.png">
+  <link href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" media="screen" rel="stylesheet" type="text/css" />
+  <link href="css/frame.css" media="screen" rel="stylesheet" type="text/css" />
+  <link href="css/controls.css" media="screen" rel="stylesheet" type="text/css" />
+  <link href="css/custom.css" media="screen" rel="stylesheet" type="text/css" />
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300,700' rel='stylesheet' type='text/css'>
+  <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700" rel="stylesheet">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="js/menu.js"></script>
+  <script src="js/footer.js"></script>
+  <style>
+    .post-summary {
+      cursor: pointer;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+    }
+    .post-summary img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      margin-right: 20px;
+    }
+    .menu-blog {
+      color: rgb(255, 255, 255) !important;
+      opacity: 1 !important;
+      font-weight: 700 !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="menu-container"></div>
+    <div class="content">
+      <div class="content-table flex-column">
+        <div class="flex-row">
+          <div class="flex-item flex-column full-width">
+            <h2>List of Posts</h2>
+            <hr>
+            <a href="blog.html"><h3>create new post</h3></a>
+          </div>
+          
+          <div id="postList"></div>
+        </div>
+      </div>
+    </div>
+  <button id="nextPage">Next Page</button>
+
+  
+  <div class="footer-container" ></div>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  
+  <script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyA_6JaEDwjsguMhAqcUXwNlWODzqsWDPNo",
+        authDomain: "karyamukti-test.firebaseapp.com",
+        projectId: "karyamukti-test",
+        storageBucket: "karyamukti-test.appspot.com",
+        messagingSenderId: "803789343916",
+        appId: "1:803789343916:web:6c693876e74e2e48d4e309",
+        measurementId: "G-ZQTPJ25M4J"
+      };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const postListDiv = document.getElementById("postList");
+    const nextPageButton = document.getElementById("nextPage");
+    const postsPerPage = 25;
+    let currentPage = 1;
+
+    function formatTimestampToWIB(timestamp) {
+      const utcDate = timestamp.toDate();
+      const wibOffset = 7 * 60 * 60 * 1000;
+      const wibDate = new Date(utcDate.getTime() + wibOffset);
+      const options = {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "numeric"
+      };
+      const formattedDate = wibDate.toLocaleString("en-US", options);
+      return formattedDate;
+    }
+
+    function displayPosts(querySnapshot) {
+      let count = 0;
+      querySnapshot.forEach((doc) => {
+        if (count < postsPerPage * currentPage) {
+          const postData = doc.data();
+          const postSummary = document.createElement("div");
+          postSummary.classList.add("post-summary");
+
+          const timestamp = postData.timestamp;
+
+          const formattedTimestampWIB = timestamp ? formatTimestampToWIB(timestamp) : 'Invalid timestamp';
+
+          postSummary.innerHTML = `
+          <div class="flex-row">
+            <div class="flex-item flex-item-stretch flex-column">
+              <img class="image max-width-400"  src="${postData.imageURL || 'placeholder_image_url.jpg'}" alt="Post Image">
+            </div>
+            <div class="flex-item flex-item-stretch-4 flex-column">
+              <p class="text">
+              <a class="highlight-text" href="javascript:void(0)">${postData.title}</a> <!-- Provide a default title if missing -->
+              <br>${postData.content.slice(0, 200)}</p> <!-- Handle missing content -->
+              <p>${formattedTimestampWIB} WIB</p>
+            </div>
+          </div>  
+          `;
+
+          postSummary.addEventListener("click", function() {
+            window.location.href = `fullPost.html?id=${doc.id}`;
+          });
+
+          postListDiv.appendChild(postSummary);
+        }
+        count++;
+      });
+
+      if (count <= postsPerPage * currentPage) {
+        nextPageButton.style.display = "none";
+      } else {
+        nextPageButton.style.display = "block";
+      }
+    }
+
+    nextPageButton.addEventListener("click", () => {
+      currentPage++;
+      postListDiv.innerHTML = '';
+      db.collection("blog").orderBy("timestamp", "desc").get().then((querySnapshot) => {
+        displayPosts(querySnapshot);
+      }).catch((error) => {
+        console.error("Error fetching posts: ", error);
+      });
+    });
+
+    db.collection("blog").orderBy("timestamp", "desc").get().then((querySnapshot) => {
+      displayPosts(querySnapshot);
+    }).catch((error) => {
+      console.error("Error fetching posts: ", error);
+    });
+  </script>
+</body>
+</html>
